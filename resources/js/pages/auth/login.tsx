@@ -1,113 +1,126 @@
+import { Head, Form } from '@inertiajs/react';
+import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import AuthenticatedSessionController from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
-import InputError from '@/components/input-error';
-import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
-import AuthLayout from '@/layouts/auth-layout';
-import { register } from '@/routes';
-import { request } from '@/routes/password';
-import { Form, Head } from '@inertiajs/react';
 
-interface LoginProps {
-    status?: string;
-    canResetPassword: boolean;
-}
+export default function Login({ status }: { status?: string }) {
+    const [showPassword, setShowPassword] = useState(false);
 
-export default function Login({ status, canResetPassword }: LoginProps) {
     return (
-        <AuthLayout
-            title="Log in to your account"
-            description="Enter your email and password below to log in"
-        >
-            <Head title="Log in" />
+        <>
+            <Head title="Login" />
 
-            <Form
-                {...AuthenticatedSessionController.store.form()}
-                resetOnSuccess={['password']}
-                className="flex flex-col gap-6"
-            >
-                {({ processing, errors }) => (
-                    <>
-                        <div className="grid gap-6">
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    name="email"
-                                    required
-                                    autoFocus
-                                    tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
-                                />
-                                <InputError message={errors.email} />
-                            </div>
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="bg-white shadow-lg rounded-2xl overflow-hidden flex w-full max-w-4xl">
+                    
+                    {/* Left Side - Welcome */}
+                    <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-gradient-to-br from-[#051C55] to-[#14128E] text-white p-10">
+                        <div className="mb-6">
+                            <img 
+                                src="/images/logokomet.png" 
+                                alt="Logo" 
+                                className="h-16"
+                            />
+                        </div>
+                        <h2 className="text-3xl font-bold mb-4">Selamat Datang!</h2>
+                        <p className="text-sm opacity-80">
+                            Silahkan login untuk melanjutkan ke dashboard.
+                        </p>
+                    </div>
 
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={request()}
-                                            className="ml-auto text-sm"
-                                            tabIndex={5}
-                                        >
-                                            Forgot password?
-                                        </TextLink>
-                                    )}
+                    {/* Right Side - Login Form */}
+                    <div className="w-full md:w-1/2 flex justify-center items-center p-8">
+                        <div className="w-full max-w-md">
+                            {status && (
+                                <div className="mb-4 text-sm font-medium text-green-600">
+                                    {status}
                                 </div>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    name="password"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="current-password"
-                                    placeholder="Password"
-                                />
-                                <InputError message={errors.password} />
-                            </div>
+                            )}
 
-                            <div className="flex items-center space-x-3">
-                                <Checkbox
-                                    id="remember"
-                                    name="remember"
-                                    tabIndex={3}
-                                />
-                                <Label htmlFor="remember">Remember me</Label>
-                            </div>
+                            <h3 className="text-2xl font-semibold text-gray-800 mb-6">Sign In</h3>
 
-                            <Button
-                                type="submit"
-                                className="mt-4 w-full"
-                                tabIndex={4}
-                                disabled={processing}
-                                data-test="login-button"
+                            <Form
+                                {...AuthenticatedSessionController.store.form()}
+                                resetOnSuccess={['password']}
+                                className="space-y-5"
                             >
-                                {processing && <Spinner />}
-                                Log in
-                            </Button>
-                        </div>
+                                {({ data = {}, setData, processing, errors }) => (
+                                    <>
+                                        <div>
+                                            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                                                Email
+                                            </label>
+                                            <input
+                                                id="email"
+                                                type="email"
+                                                name="email"
+                                                value={data.email}
+                                                onChange={(e) => setData('email', e.target.value)}
+                                                className="mt-1 block w-full rounded-lg border-gray-300 px-4 py-2.5 shadow-sm focus:border-[#FA921C] focus:ring-[#FA921C]"
+                                                required
+                                            />
+                                            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+                                        </div>
 
-                        <div className="text-center text-sm text-muted-foreground">
-                            Don't have an account?{' '}
-                            <TextLink href={register()} tabIndex={5}>
-                                Sign up
-                            </TextLink>
-                        </div>
-                    </>
-                )}
-            </Form>
+                                        <div>
+                                            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                                                Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    id="password"
+                                                    type={showPassword ? 'text' : 'password'}
+                                                    name="password"
+                                                    value={data.password}
+                                                    onChange={(e) => setData('password', e.target.value)}
+                                                    className="mt-1 block w-full rounded-lg border-gray-300 px-4 py-2.5 shadow-sm focus:border-[#FA921C] focus:ring-[#FA921C]"
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                    className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                                                >
+                                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                                </button>
+                                            </div>
+                                            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                                        </div>
 
-            {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    {status}
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                id="remember"
+                                                type="checkbox"
+                                                name="remember"
+                                                checked={data.remember}
+                                                onChange={(e) => setData('remember', e.target.checked)}
+                                                className="rounded border-gray-300 text-[#FA921C] focus:ring-[#FA921C]"
+                                            />
+                                            <label htmlFor="remember" className="text-sm text-gray-600">
+                                                Remember me
+                                            </label>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="w-full py-2.5 px-4 bg-gradient-to-r from-[#FA921C] to-[#D05100] hover:opacity-90 text-white font-semibold rounded-lg shadow-md transition"
+                                        >
+                                            {processing ? 'Logging in...' : 'Login'}
+                                        </button>
+                                         <p className="text-center text-sm text-gray-600 mt-4">
+                                            Belum punya akun?{' '}
+                                            <a href="/register" className="text-[#FA921C] hover:underline">
+                                                Register di sini
+                                            </a>
+                                        </p>
+                                    </>
+                                )}
+                            </Form>
+                        </div>
+                    </div>
                 </div>
-            )}
-        </AuthLayout>
+            </div>
+        </>
     );
 }
