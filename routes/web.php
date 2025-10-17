@@ -8,6 +8,8 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/peta-pasar', [PasarController::class, 'peta'])->name('pasar.peta');
+
 Route::prefix('dashboard')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', function () {
         return Inertia::render('dashboard/index');

@@ -7,8 +7,11 @@ import L from "leaflet";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import "leaflet/dist/leaflet.css";
+import { store, update, destroy as destroyPasar } from "@/actions/App/Http/Controllers/PasarController";
 
 interface Pasar {
+  gambar: string;
+  url_harga: string;
   id: number;
   nama: string;
   alamat: string;
@@ -21,7 +24,6 @@ interface Props {
   pasars: Pasar[];
 }
 
-// Icon marker
 const markerIcon = L.icon({
   iconUrl: "/images/marker.png",
   iconSize: [35, 35],
@@ -54,6 +56,8 @@ export default function Index({ pasars }: Props) {
   const { data, setData, post, put, delete: destroy, reset } = useForm({
     nama: "",
     alamat: "",
+    gambar: null as File | null,
+    url_harga: "",
     latitude: "",
     longitude: "",
   });
@@ -73,6 +77,8 @@ export default function Index({ pasars }: Props) {
       alamat: pasar.alamat,
       latitude: pasar.latitude,
       longitude: pasar.longitude,
+      url_harga: pasar.url_harga || "",
+      gambar: null,
     });
     setLocation({
       lat: parseFloat(pasar.latitude),
@@ -87,7 +93,7 @@ export default function Index({ pasars }: Props) {
     setLocation(null);
   };
 
-  // ✅ Filter dan pagination
+  // 🔍 Filter + Pagination
   const filteredPasars = useMemo(() => {
     return pasars.filter(
       (p) =>
@@ -99,32 +105,51 @@ export default function Index({ pasars }: Props) {
   const totalPages = Math.ceil(filteredPasars.length / itemsPerPage);
   const currentData = filteredPasars.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
+  // 🧭 Submit dengan Wayfinder
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const action = editMode ? "update" : "create";
-    const method = editMode && selectedPasar ? put : post;
-    const url = editMode ? route("pasar.update", selectedPasar!.id) : route("pasar.store");
-
-    method(url, {
-      onSuccess: () => {
-        closeModal();
-        Swal.fire({
-          icon: "success",
-          title: `Data berhasil ${action === "update" ? "diperbarui" : "ditambahkan"}!`,
-          timer: 2000,
-          showConfirmButton: false,
-        });
-      },
-      onError: () => {
-        Swal.fire({
-          icon: "error",
-          title: "Gagal menyimpan data!",
-          timer: 2000,
-          showConfirmButton: false,
-        });
-      },
-    });
+    if (editMode && selectedPasar) {
+      put(update(selectedPasar.id), {
+        onSuccess: () => {
+          closeModal();
+          Swal.fire({
+            icon: "success",
+            title: "Data berhasil diperbarui!",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        },
+        onError: () => {
+          Swal.fire({
+            icon: "error",
+            title: "Gagal memperbarui data!",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        },
+      });
+    } else {
+      post(store(), {
+        onSuccess: () => {
+          closeModal();
+          Swal.fire({
+            icon: "success",
+            title: "Data berhasil ditambahkan!",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        },
+        onError: () => {
+          Swal.fire({
+            icon: "error",
+            title: "Gagal menambahkan data!",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        },
+      });
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -138,7 +163,7 @@ export default function Index({ pasars }: Props) {
       confirmButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) {
-        destroy(route("pasar.destroy", id), {
+        destroy(destroyPasar(id), {
           onSuccess: () => {
             Swal.fire({
               icon: "success",
@@ -221,7 +246,6 @@ export default function Index({ pasars }: Props) {
           </table>
         </div>
 
-        {/* ✅ Pagination (tampil hanya jika perlu) */}
         {totalPages > 1 && (
           <div className="flex justify-center mt-4 gap-2">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
@@ -237,7 +261,7 @@ export default function Index({ pasars }: Props) {
         )}
       </div>
 
-      {/* MODAL FORM */}
+      {/* ✅ Modal Form */}
       <Modal
         show={isOpen}
         onClose={closeModal}
@@ -245,7 +269,7 @@ export default function Index({ pasars }: Props) {
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <fieldset className="fieldset text-sm font-medium text-gray-700 ">
+          <fieldset className="fieldset text-sm font-medium text-gray-700">
             <legend className="fieldset-legend">Nama Pasar</legend>
             <input
               type="text"
@@ -258,7 +282,7 @@ export default function Index({ pasars }: Props) {
           </fieldset>
 
           <fieldset className="fieldset text-sm font-medium text-gray-700">
-            <legend className="fieldset-legend ">Alamat pasar</legend>
+            <legend className="fieldset-legend">Alamat Pasar</legend>
             <textarea
               value={data.alamat}
               onChange={(e) => setData("alamat", e.target.value)}
@@ -268,7 +292,34 @@ export default function Index({ pasars }: Props) {
             />
           </fieldset>
 
-          {/* MAP */}
+          <fieldset className="fieldset text-sm font-medium text-gray-700">
+            <legend className="fieldset-legend">Gambar Pasar</legend>
+            {editMode && selectedPasar?.gambar && (
+              <img
+                src={`/${selectedPasar.gambar}`}
+                alt={selectedPasar.nama}
+                className="w-full h-32 object-cover rounded-lg mb-2 border"
+              />
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setData("gambar", e.target.files?.[0] ?? null)}
+              className="file-input w-full border-gray-400"
+            />
+          </fieldset>
+
+          <fieldset className="fieldset text-sm font-medium text-gray-700 mt-2">
+            <legend className="fieldset-legend">URL Harga Pasar</legend>
+            <input
+              type="url"
+              value={data.url_harga || ""}
+              onChange={(e) => setData("url_harga", e.target.value)}
+              placeholder="https://contoh.com/harga-pasar"
+              className="input w-full border-gray-400"
+            />
+          </fieldset>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Pilih Lokasi

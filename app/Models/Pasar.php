@@ -8,5 +8,5 @@ class Pasar extends Model
 {
     protected $table = 'pasar';
 
-    protected $fillable = ['nama', 'alamat', 'latitude', 'longitude'];
+    protected $fillable = ['nama', 'alamat', 'gambar', 'url_harga','latitude', 'longitude'];
 }
